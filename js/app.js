@@ -58,8 +58,22 @@ script1.onload = () => {
       }
     });
 
-    // Real-time Files Listener
-    db.collection("files").onSnapshot(snapshot => {
+    // Real-time Files Listener (Optimized)
+    let filesRef = db.collection("files");
+    
+    // Only fetch everything if we are an admin or on the all-files page
+    // Otherwise, try to filter by the current context to save speed
+    const isSpecialPage = window.location.pathname.includes('admin.html') || window.location.pathname.includes('teacher-dash.html');
+    
+    if (!isSpecialPage && currentSubject) {
+      // If we are on a subject page, only get files for that subject
+      filesRef = filesRef.where("subject", "==", currentSubject);
+    } else if (!isSpecialPage && currentCourseId && currentSem) {
+      // If we are on a subjects list page, get files for that sem to show badges
+      filesRef = filesRef.where("course", "==", currentCourseId).where("sem", "==", currentSem.toString());
+    }
+    
+    filesRef.onSnapshot(snapshot => {
       data.files = {};
       snapshot.forEach(doc => {
         const f = doc.data();
@@ -74,14 +88,25 @@ script1.onload = () => {
       if(typeof renderAdminAllFiles === 'function') renderAdminAllFiles();
       if(typeof renderTeacherUploads === 'function') renderTeacherUploads();
       if(typeof updateAdminStats === 'function') updateAdminStats();
+      
+      // If we are on the splash screen, we are now ready to go
+      if(window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+        setTimeout(() => window.location.href = 'home.html', 1000);
+      }
     });
 
-    // Simple Real-time Analytics: Track Page Views
-    db.collection("appData").doc("stats").update({
-      views: firebase.firestore.FieldValue.increment(1)
-    }).catch(() => {
-      // Create if doesn't exist
-      db.collection("appData").doc("stats").set({ views: 1, downloads: 0 }, { merge: true });
+    // Professional Analytics: Separate Views and Daily Visitors
+    const lastVisit = localStorage.getItem('nb_last_visit');
+    const today = new Date().toDateString();
+    
+    let statsUpdate = { views: firebase.firestore.FieldValue.increment(1) };
+    if (lastVisit !== today) {
+      statsUpdate.visitors = firebase.firestore.FieldValue.increment(1);
+      localStorage.setItem('nb_last_visit', today);
+    }
+    
+    db.collection("appData").doc("stats").update(statsUpdate).catch(() => {
+      db.collection("appData").doc("stats").set({ views: 1, visitors: 1, downloads: 0 }, { merge: true });
     });
 
     // If a page has a specific onFirebaseLoad function, call it

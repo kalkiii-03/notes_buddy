@@ -207,8 +207,11 @@
         <!-- CONTACT -->
         <div id="admin-sec-contact" class="admin-panel-section">
           <h2>Contact Messages</h2>
-          <div class="card" style="margin-top: 24px;">
-            <p>Admin view of contact form submissions would appear here connected to Firebase Firestore.</p>
+          <div style="overflow-x: auto; margin-top: 24px;">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Name</th><th>Course</th><th>Mobile</th><th>Message</th><th>Actions</th></tr></thead>
+              <tbody id="admin-messages-list"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -232,12 +235,39 @@
         if(doc.exists) {
           const s = doc.data();
           if(document.getElementById('stat-visitors-live')) {
-            document.getElementById('stat-visitors-live').innerText = s.views || 0;
+            document.getElementById('stat-visitors-live').innerText = s.visitors || 0;
             document.getElementById('stat-views-live').innerText = s.views || 0;
             document.getElementById('stat-downloads-live').innerText = s.downloads || 0;
           }
         }
       });
+      
+      // Load Contact Messages
+      db.collection("contact_requests").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+        const list = document.getElementById('admin-messages-list');
+        if(!list) return;
+        list.innerHTML = '';
+        snapshot.forEach(doc => {
+          const m = doc.data();
+          const date = m.timestamp ? m.timestamp.toDate().toLocaleDateString() : 'Just now';
+          list.innerHTML += `
+            <tr>
+              <td>${date}</td>
+              <td>${m.name}</td>
+              <td>${m.course}</td>
+              <td>${m.mobile || '-'}</td>
+              <td style="max-width:300px; white-space:normal; font-size:13px;">${m.message}</td>
+              <td><button class="btn btn-ghost" style="color:#ffb4ab;" onclick="deleteMessage('${doc.id}')">Clear</button></td>
+            </tr>
+          `;
+        });
+      });
+    }
+    
+    function deleteMessage(id) {
+      if(confirm("Delete this message?")) {
+        db.collection("contact_requests").doc(id).delete();
+      }
     }
 
     function adminLogin() {

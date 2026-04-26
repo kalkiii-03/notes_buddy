@@ -1,12 +1,12 @@
-const CACHE_NAME = 'notesbuddy-v1';
+const CACHE_NAME = 'notesbuddy-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/home.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/data.js',
-  '/logo.png'
+  './',
+  'index.html',
+  'home.html',
+  'css/style.css',
+  'js/app.js',
+  'js/data.js',
+  'logo.png'
 ];
 
 self.addEventListener('install', (e) => {

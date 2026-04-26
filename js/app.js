@@ -27,7 +27,6 @@ if ('serviceWorker' in navigator) {
 // Initialize Firebase
 function initFirebase() {
   if (typeof firebase === 'undefined') {
-    // If not loaded yet, wait a bit
     setTimeout(initFirebase, 50);
     return;
   }
@@ -36,15 +35,41 @@ function initFirebase() {
     firebase.initializeApp(firebaseConfig);
   }
   window.db = firebase.firestore();
+  
+  // Enable Offline Persistence
+  db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+    console.warn("Persistence failed:", err.code);
+  });
+
   console.log("Firebase Connected!");
   
-  // Real-time Metadata Listener
+  // 1. Instant Load from Cache
+  const cachedMetadata = localStorage.getItem('nb_metadata');
+  if (cachedMetadata) {
+    try {
+      const d = JSON.parse(cachedMetadata);
+      data.courses = d.courses || [];
+      data.subjects = d.subjects || {};
+      data.teachers = d.teachers || [];
+      // Quick render while waiting for server
+      setTimeout(() => {
+        if(typeof renderCourses === 'function') renderCourses();
+        if(typeof renderSemesters === 'function') renderSemesters();
+        if(typeof renderSubjects === 'function') renderSubjects();
+      }, 0);
+    } catch(e) {}
+  }
+  
+  // Real-time Metadata Listener (Server Sync)
   db.collection("appData").doc("metadata").onSnapshot(doc => {
     if (doc.exists) {
       const d = doc.data();
       data.courses = d.courses || [];
       data.subjects = d.subjects || {};
       data.teachers = d.teachers || [];
+      
+      // Save to Cache for next time
+      localStorage.setItem('nb_metadata', JSON.stringify(d));
       
       if(typeof renderCourses === 'function') renderCourses();
       if(typeof renderSemesters === 'function') renderSemesters();

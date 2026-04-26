@@ -15,14 +15,24 @@
   --radius-pill: 9999px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  -webkit-tap-highlight-color: transparent; 
+  -webkit-touch-callout: none; /* Disable iOS/Android long-press menus */
+}
+
 body {
   background-color: var(--bg-base);
   color: var(--text-main);
   font-family: var(--font-body);
   line-height: 1.6;
+  /* Hard-Lock Selection */
   user-select: none;
   -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   /* Subtle noise texture */
   background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.03"/%3E%3C/svg%3E');
   -webkit-font-smoothing: antialiased;
@@ -31,9 +41,20 @@ body {
   flex-direction: column;
 }
 
-/* Typography */
-h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); font-weight: 700; color: var(--text-main); user-select: text; -webkit-user-select: text; }
-p, span, div, input, textarea, td { color: var(--text-muted); user-select: text; -webkit-user-select: text; }
+/* Typography & Whitelisted Selection */
+h1, h2, h3, h4, h5, h6 { 
+  font-family: var(--font-heading); 
+  font-weight: 700; 
+  color: var(--text-main); 
+  user-select: text; 
+  -webkit-user-select: text; 
+}
+
+p, span, div, input, textarea, td, .note-item-name { 
+  color: var(--text-muted); 
+  user-select: text; 
+  -webkit-user-select: text; 
+}
 
 /* Layout & Utilities */
 .container { max-width: 1200px; margin: 0 auto; padding: 24px; flex: 1; width: 100%; }

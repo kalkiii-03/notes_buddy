@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotesBuddy - Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e5a0">
+  <link rel="apple-touch-icon" href="logo.png">
+</head>
+<body>
+
+  <!-- Login Overlay -->
+  <div id="admin-login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 18, 24, 0.95); backdrop-filter: blur(10px); z-index: 50; display: flex; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
+      <h2 style="margin-bottom: 16px;">Admin Access</h2>
+      <div id="admin-error" class="error-msg">Invalid credentials</div>
+      <input type="text" id="admin-username" class="input-field" placeholder="Username">
+      <div style="position: relative;">
+        <input type="password" id="admin-password" class="input-field" placeholder="Password">
+        <span onclick="togglePassword('admin-password', this)" style="position: absolute; right: 16px; top: 14px; cursor: pointer; color: var(--text-muted); font-size: 14px; font-weight: 600;">Show</span>
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 16px;">
+        <button class="btn btn-ghost" style="flex: 1;" onclick="window.location.href='home.html'">Cancel</button>
+        <button class="btn btn-primary" style="flex: 1;" onclick="adminLogin()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="container" style="max-width: 100%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+      <a href="home.html" class="nav-brand">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:24px;">
+          <path d="M20 80V20C20 14.4772 24.4772 10 30 10H50V90H30C24.4772 90 20 85.5228 20 80Z" fill="#00e5a0" fill-opacity="0.2" stroke="#00e5a0" stroke-width="4"/>
+        </svg>
+        Admin Console
+      </a>
+      <span style="color: var(--text-muted); font-size: 14px;">Logged in as Admin</span>
+    </div>
+
+    <div class="admin-layout">
+      <div class="admin-sidebar">
+        <div class="admin-nav-item active" onclick="switchAdminSection('dashboard')">Dashboard</div>
+        <div class="admin-nav-item" onclick="switchAdminSection('courses')">Courses</div>
+        <div class="admin-nav-item" onclick="switchAdminSection('subjects')">Subjects</div>
+        <div class="admin-nav-item" onclick="switchAdminSection('upload')">Upload File</div>
+        <div class="admin-nav-item" onclick="switchAdminSection('files')">All Files</div>
+        <div class="admin-nav-item" onclick="switchAdminSection('teachers')">Teachers</div>
+        <div class="admin-nav-item" onclick="switchAdminSection('analytics')">Analytics</div>
+        <div class="admin-nav-item" onclick="switchAdminSection('contact')">Contact</div>
+        <div class="admin-nav-item" style="color: #ffb4ab;" onclick="logoutAdmin()">Logout</div>
+      </div>
+      
+      <div class="admin-content">
+        <!-- DASHBOARD -->
+        <div id="admin-sec-dashboard" class="admin-panel-section active">
+          <h2>Dashboard Overview</h2>
+          <div class="stat-cards" style="margin-top: 24px;">
+            <div class="stat-card"><div>Total Courses</div><div id="stat-courses" class="stat-value">0</div></div>
+            <div class="stat-card"><div>Total Subjects</div><div id="stat-subjects" class="stat-value">0</div></div>
+            <div class="stat-card"><div>Total Files</div><div id="stat-files" class="stat-value">0</div></div>
+            <div class="stat-card"><div>Teachers</div><div id="stat-teachers" class="stat-value">0</div></div>
+          </div>
+        </div>
+
+        <!-- COURSES -->
+        <div id="admin-sec-courses" class="admin-panel-section">
+          <h2>Manage Courses</h2>
+          <div style="overflow-x: auto;">
+            <table class="data-table" style="margin-bottom: 32px;">
+              <thead><tr><th>Short Name</th><th>Full Name</th><th>Semesters</th><th>Actions</th></tr></thead>
+              <tbody id="admin-courses-list"></tbody>
+            </table>
+          </div>
+          <div class="card" style="max-width: 600px;">
+            <h3>Add New Course</h3>
+            <div class="form-grid" style="margin-top: 16px;">
+              <input type="text" id="ac-id" class="input-field" placeholder="Short Name">
+              <input type="text" id="ac-full" class="input-field" placeholder="Full Name">
+              <input type="number" id="ac-sems" class="input-field" placeholder="Semesters" value="6">
+            </div>
+            <button class="btn btn-primary" onclick="adminAddCourse()">Save Course</button>
+          </div>
+        </div>
+
+        <!-- SUBJECTS -->
+        <div id="admin-sec-subjects" class="admin-panel-section">
+          <h2>Manage Subjects</h2>
+          <div class="form-grid" style="margin-top: 16px; margin-bottom: 24px;">
+            <select id="as-filter-course" class="input-field" onchange="renderAdminSubjects()"><option value="">Select Course</option></select>
+            <select id="as-filter-sem" class="input-field" onchange="renderAdminSubjects()"><option value="">Select Sem</option></select>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table" style="margin-bottom: 32px;">
+              <thead><tr><th>Subject Name</th><th>Actions</th></tr></thead>
+              <tbody id="admin-subjects-list"></tbody>
+            </table>
+          </div>
+          <div class="card" style="max-width: 600px;">
+            <h3>Add New Subject</h3>
+            <div style="margin-top: 16px;">
+              <input type="text" id="as-new-name" class="input-field" placeholder="Subject Name">
+              <button class="btn btn-primary" onclick="adminAddSubject()">Save Subject</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPLOAD -->
+        <div id="admin-sec-upload" class="admin-panel-section">
+          <h2>Upload File</h2>
+          <p style="margin-bottom: 24px; color: var(--text-muted);">Directly upload materials to the database.</p>
+          <div class="form-grid" style="max-width: 800px;">
+            <select id="au-course" class="input-field" onchange="updateAdminSubjects()"><option value="">Select Course...</option></select>
+            <select id="au-sem" class="input-field" onchange="updateAdminSubjects()">
+              <option value="">Select Semester...</option><option value="1">1</option><option value="2">2</option>
+              <option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>
+            </select>
+            <select id="au-subject" class="input-field"><option value="">Select Subject...</option></select>
+            <select id="au-type" class="input-field">
+              <option value="">Select File Type...</option>
+              <option value="notes">Notes</option><option value="books">Book</option>
+              <option value="pyqs">PYQs</option><option value="syllabus">Syllabus</option>
+            </select>
+            <input type="text" id="au-title" class="input-field" placeholder="File Title">
+            <input type="text" id="au-credit" class="input-field" placeholder="Credit (Optional)">
+            <input type="url" id="au-file" class="input-field" placeholder="Google Drive Link (Make sure it's public)">
+          </div>
+          <button class="btn btn-primary" onclick="adminUpload()">Upload Now</button>
+        </div>
+
+        <!-- ALL FILES -->
+        <div id="admin-sec-files" class="admin-panel-section">
+          <h2>All Files</h2>
+          <div class="form-grid" style="margin-top: 16px; margin-bottom: 24px;">
+            <select id="af-filter-course" class="input-field" onchange="renderAdminAllFiles()"><option value="">All Courses</option></select>
+            <select id="af-filter-type" class="input-field" onchange="renderAdminAllFiles()">
+              <option value="">All Types</option>
+              <option value="notes">Notes</option><option value="books">Books</option>
+              <option value="pyqs">PYQs</option><option value="syllabus">Syllabus</option>
+            </select>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead><tr><th>File Name</th><th>Course</th><th>Sem</th><th>Subject</th><th>Type</th><th>Size</th><th>Uploader</th><th>Actions</th></tr></thead>
+              <tbody id="admin-all-files-list"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TEACHERS -->
+        <div id="admin-sec-teachers" class="admin-panel-section">
+          <h2>Manage Teachers</h2>
+          <div style="overflow-x: auto;">
+            <table class="data-table" style="margin-bottom: 32px;">
+              <thead><tr><th>Name</th><th>Username</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="admin-teachers-list"></tbody>
+            </table>
+          </div>
+          <div class="card" style="max-width: 600px;">
+            <h3>Add Teacher Account</h3>
+            <div class="form-grid" style="margin-top: 16px;">
+              <input type="text" id="at-name" class="input-field" placeholder="Full Name">
+              <input type="text" id="at-username" class="input-field" placeholder="Username">
+              <input type="password" id="at-password" class="input-field" placeholder="Password">
+            </div>
+            <button class="btn btn-primary" onclick="adminAddTeacher()">Create Account</button>
+          </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div id="admin-sec-analytics" class="admin-panel-section">
+          <h2>Platform Analytics</h2>
+          <div class="stat-cards" style="margin-top: 24px;">
+            <div class="stat-card"><div>Total Visitors</div><div id="stat-visitors-live" class="stat-value">0</div></div>
+            <div class="stat-card"><div>Page Views</div><div id="stat-views-live" class="stat-value">0</div></div>
+            <div class="stat-card"><div>Downloads</div><div id="stat-downloads-live" class="stat-value">0</div></div>
+            <div class="stat-card"><div>System Health</div><div class="stat-value" style="color:var(--accent-mint)">Online</div></div>
+          </div>
+          <div class="form-grid" style="margin-top: 32px;">
+            <div class="card">
+              <h3>Course Traffic</h3>
+              <div class="bar-chart">
+                <div class="bar-row"><div class="bar-label">BCA</div><div class="bar-track"><div class="bar-fill" style="width: 85%"></div></div><div class="bar-value">85%</div></div>
+                <div class="bar-row"><div class="bar-label">BBA</div><div class="bar-track"><div class="bar-fill" style="width: 45%"></div></div><div class="bar-value">45%</div></div>
+                <div class="bar-row"><div class="bar-label">B.Com</div><div class="bar-track"><div class="bar-fill" style="width: 30%"></div></div><div class="bar-value">30%</div></div>
+                <div class="bar-row"><div class="bar-label">B.Sc</div><div class="bar-track"><div class="bar-fill" style="width: 25%"></div></div><div class="bar-value">25%</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Device Breakdown</h3>
+              <div class="bar-chart">
+                <div class="bar-row"><div class="bar-label">Mobile</div><div class="bar-track"><div class="bar-fill" style="width: 78%"></div></div><div class="bar-value">78%</div></div>
+                <div class="bar-row"><div class="bar-label">Desktop</div><div class="bar-track"><div class="bar-fill" style="width: 18%"></div></div><div class="bar-value">18%</div></div>
+                <div class="bar-row"><div class="bar-label">Tablet</div><div class="bar-track"><div class="bar-fill" style="width: 4%"></div></div><div class="bar-value">4%</div></div>
+              </div>
+            </div>
+          </div>
+          <p style="margin-top: 24px; text-align: center; color: var(--text-muted); font-size: 14px;">Live data will be powered by Firebase Analytics.</p>
+        </div>
+
+        <!-- CONTACT -->
+        <div id="admin-sec-contact" class="admin-panel-section">
+          <h2>Contact Messages</h2>
+          <div class="card" style="margin-top: 24px;">
+            <p>Admin view of contact form submissions would appear here connected to Firebase Firestore.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-text">Programmed by Shivam</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    window.onload = () => {
+      if(isAdminLoggedIn) {
+        document.getElementById('admin-login-overlay').style.display = 'none';
+        updateAdminStats();
+        initAdminAnalytics();
+      }
+    };
+
+    function initAdminAnalytics() {
+      db.collection("appData").doc("stats").onSnapshot(doc => {
+        if(doc.exists) {
+          const s = doc.data();
+          if(document.getElementById('stat-visitors-live')) {
+            document.getElementById('stat-visitors-live').innerText = s.views || 0;
+            document.getElementById('stat-views-live').innerText = s.views || 0;
+            document.getElementById('stat-downloads-live').innerText = s.downloads || 0;
+          }
+        }
+      });
+    }
+
+    function adminLogin() {
+      const u = document.getElementById('admin-username').value;
+      const p = document.getElementById('admin-password').value;
+      const err = document.getElementById('admin-error');
+      
+      if(u === data.admin.username && p === data.admin.password) {
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        document.getElementById('admin-login-overlay').style.display = 'none';
+        err.style.display = 'none';
+        
+        updateAdminStats();
+        populateAdminDropdowns();
+      } else {
+        err.style.display = 'block';
+      }
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem('isAdminLoggedIn');
+      window.location.href = 'home.html';
+    }
+
+    function switchAdminSection(sec) {
+      document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.admin-panel-section').forEach(el => el.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('admin-sec-' + sec).classList.add('active');
+      
+      if(sec === 'dashboard') updateAdminStats();
+      if(sec === 'courses') renderAdminCourses();
+      if(sec === 'teachers') renderAdminTeachers();
+      if(sec === 'files') renderAdminAllFiles();
+    }
+
+    function updateAdminStats() {
+      if(!data.subjects || !data.courses) return;
+      let subCount = 0;
+      data.courses.forEach(course => {
+        const cId = course.id;
+        if(data.subjects[cId]) {
+          Object.keys(data.subjects[cId]).forEach(sem => {
+            subCount += data.subjects[cId][sem].length;
+          });
+        }
+      });
+      
+      let fileCount = 0;
+      if(data.files) {
+        Object.keys(data.files).forEach(s => {
+          const f = data.files[s];
+          fileCount += (f.notes?.length || 0) + (f.books?.length || 0) + (f.pyqs?.length || 0) + (f.syllabus?.length || 0);
+        });
+      }
+
+      document.getElementById('stat-courses').innerText = data.courses.length;
+      document.getElementById('stat-subjects').innerText = subCount;
+      document.getElementById('stat-files').innerText = fileCount;
+      document.getElementById('stat-teachers').innerText = data.teachers.length;
+    }
+
+    function populateAdminDropdowns() {
+      const c1 = document.getElementById('as-filter-course');
+      const c2 = document.getElementById('au-course');
+      const c3 = document.getElementById('af-filter-course');
+      
+      let opts = '<option value="">Select Course...</option>';
+      data.courses.forEach(c => { opts += `<option value="${c.id}">${c.name}</option>`; });
+      
+      if(c1) c1.innerHTML = opts;
+      if(c2) c2.innerHTML = opts;
+      if(c3) c3.innerHTML = '<option value="">All Courses</option>' + opts;
+    }
+
+    function renderAdminCourses() {
+      const list = document.getElementById('admin-courses-list');
+      list.innerHTML = data.courses.map((c, i) => `
+        <tr>
+          <td>${c.name}</td><td>${c.full}</td><td>${c.sems}</td>
+          <td>
+            <button class="btn btn-ghost" style="padding:4px 8px;font-size:12px;color:#ffb4ab;" onclick="adminDeleteCourse(${i})">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function saveMetadata() {
+      if(window.db) {
+        db.collection("appData").doc("metadata").update({ courses: data.courses, subjects: data.subjects, teachers: data.teachers });
+      }
+    }
+
+    function adminAddCourse() {
+      const id = document.getElementById('ac-id').value.toLowerCase();
+      const full = document.getElementById('ac-full').value;
+      const sems = document.getElementById('ac-sems').value;
+      if(!id || !full) return;
+      data.courses.push({ id, name: id.toUpperCase(), full, sems: parseInt(sems), subjects: 0 });
+      document.getElementById('ac-id').value=''; document.getElementById('ac-full').value='';
+      saveMetadata(); showToast("Course Added");
+    }
+
+    async function adminDeleteCourse(i) {
+      const courseId = data.courses[i].id;
+      
+      // 1. Remove from courses array
+      data.courses.splice(i, 1);
+      
+      // 2. Remove from subjects object
+      if (data.subjects[courseId]) {
+        delete data.subjects[courseId];
+      }
+      
+      // 3. Update Firestore metadata
+      saveMetadata();
+      
+      // 4. Delete all files associated with this course from 'files' collection
+      try {
+        const snapshot = await db.collection("files").where("course", "==", courseId).get();
+        const batch = db.batch();
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        showToast("Course & associated data deleted");
+      } catch (e) {
+        console.error("Error cleaning up files:", e);
+        showToast("Course deleted (files cleanup failed)");
+      }
+    }
+
+    function renderAdminSubjects() {
+      const c = document.getElementById('as-filter-course').value;
+      const sem = document.getElementById('as-filter-sem').value;
+      const list = document.getElementById('admin-subjects-list');
+      list.innerHTML = '';
+      if(c && sem && data.subjects[c] && data.subjects[c][sem]) {
+        data.subjects[c][sem].forEach((sub, i) => {
+          list.innerHTML += `<tr><td>${sub}</td><td><button class="btn btn-ghost" style="padding:4px 8px;font-size:12px;color:#ffb4ab;" onclick="adminDeleteSubject('${c}', '${sem}', ${i})">Delete</button></td></tr>`;
+        });
+      }
+    }
+
+    function adminAddSubject() {
+      const c = document.getElementById('as-filter-course').value;
+      const sem = document.getElementById('as-filter-sem').value;
+      const name = document.getElementById('as-new-name').value;
+      if(!c || !sem || !name) return;
+      if(!data.subjects[c]) data.subjects[c] = {};
+      if(!data.subjects[c][sem]) data.subjects[c][sem] = [];
+      data.subjects[c][sem].push(name);
+      document.getElementById('as-new-name').value = '';
+      saveMetadata(); showToast("Subject Added");
+    }
+
+    function adminDeleteSubject(c, sem, i) {
+      data.subjects[c][sem].splice(i, 1);
+      saveMetadata(); showToast("Subject Deleted");
+    }
+
+    function renderAdminTeachers() {
+      const list = document.getElementById('admin-teachers-list');
+      list.innerHTML = data.teachers.map((t, i) => `
+        <tr><td>${t.name}</td><td>${t.username}</td><td><span style="color:var(--accent-mint)">Active</span></td><td><button class="btn btn-ghost" style="padding:4px 8px;font-size:12px;color:#ffb4ab;" onclick="adminDeleteTeacher(${i})">Delete</button></td></tr>
+      `).join('');
+    }
+
+    function adminAddTeacher() {
+      const n = document.getElementById('at-name').value;
+      const u = document.getElementById('at-username').value;
+      const p = document.getElementById('at-password').value;
+      if(!n||!u||!p) return;
+      data.teachers.push({name:n, username:u, password:p});
+      document.getElementById('at-name').value=''; document.getElementById('at-username').value=''; document.getElementById('at-password').value='';
+      saveMetadata(); showToast("Teacher Created");
+    }
+
+    function adminDeleteTeacher(i) {
+      data.teachers.splice(i, 1);
+      saveMetadata(); showToast("Teacher Deleted");
+    }
+
+    function updateAdminSubjects() {
+      const c = document.getElementById('au-course').value;
+      const sem = document.getElementById('au-sem').value;
+      const sel = document.getElementById('au-subject');
+      sel.innerHTML = '<option value="">Select Subject...</option>';
+      if(c && sem && data.subjects[c] && data.subjects[c][sem]) {
+        data.subjects[c][sem].forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
+      }
+    }
+
+    function adminUpload() {
+      const c = document.getElementById('au-course').value;
+      const sem = document.getElementById('au-sem').value;
+      const sub = document.getElementById('au-subject').value;
+      const type = document.getElementById('au-type').value;
+      const title = document.getElementById('au-title').value;
+      const fileUrl = document.getElementById('au-file').value;
+      let credit = document.getElementById('au-credit').value;
+      if(!c||!sem||!sub||!type||!title||!fileUrl) return;
+      if(!credit) credit = "Admin";
+      
+      db.collection("files").add({
+        course: c, sem: sem, subject: sub, type: type, name: title, size: "Link", url: fileUrl, credit: credit, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        document.getElementById('au-title').value=''; document.getElementById('au-file').value=''; document.getElementById('au-credit').value='';
+        showToast("Uploaded Successfully");
+      });
+    }
+
+    function renderAdminAllFiles() {
+      const list = document.getElementById('admin-all-files-list');
+      list.innerHTML = '';
+      const filterCourse = document.getElementById('af-filter-course').value;
+      const filterType = document.getElementById('af-filter-type').value;
+      
+      Object.keys(data.files).forEach(sub => {
+        Object.keys(data.files[sub]).forEach(type => {
+          if(filterType && type !== filterType) return;
+          data.files[sub][type].forEach((f, idx) => {
+            list.innerHTML += `<tr><td>${f.name}</td><td>Any</td><td>-</td><td>${sub}</td><td>${type}</td><td>${f.size}</td><td>admin</td><td><button class="btn btn-ghost" style="padding:4px 8px;font-size:12px;color:#ffb4ab;" onclick="adminDeleteFile('${sub}','${type}',${idx})">Delete</button></td></tr>`;
+          });
+        });
+      });
+    }
+
+    function adminDeleteFile(sub, type, idx) {
+      const fileId = data.files[sub][type][idx].id;
+      db.collection("files").doc(fileId).delete().then(() => showToast("File Deleted"));
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      const courseFilter = document.getElementById('as-filter-course');
+      if (courseFilter) {
+        courseFilter.addEventListener('change', () => {
+          const semSel = document.getElementById('as-filter-sem');
+          semSel.innerHTML = '<option value="">Select Sem</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>';
+          renderAdminSubjects();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

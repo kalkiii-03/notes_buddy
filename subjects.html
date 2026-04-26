@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotesBuddy - Subjects</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e5a0">
+  <link rel="apple-touch-icon" href="logo.png">
+</head>
+<body>
+
+  <div class="container">
+    <nav class="navbar">
+      <a href="home.html" class="nav-brand">
+        <img src="logo.png" alt="Logo"> NotesBuddy
+      </a>
+      <div style="display:flex; gap: 12px;">
+        <button class="btn btn-ghost" onclick="window.location.href='teacher-login.html'">Teacher</button>
+        <button class="btn btn-primary" onclick="window.location.href='contact.html'" style="padding: 10px 16px;">Contact Me</button>
+      </div>
+    </nav>
+
+    <button class="btn btn-ghost" onclick="window.history.back()" style="margin-bottom: 24px;">← Back</button>
+    
+    <div class="breadcrumb">
+      <a href="home.html">Home</a> › <a href="semesters.html" id="bc-course-name">Course</a> › <span id="bc-sem-name">Sem N</span>
+    </div>
+    
+    <h1 id="sub-page-title" style="margin-bottom: 8px;">Semester N</h1>
+    <p id="sub-count-text">0 subjects available</p>
+
+    <div id="subject-list" class="list-subjects"></div>
+  </div>
+  <div class="footer-text">Programmed by Shivam</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    window.onload = () => {
+      renderSubjects();
+    };
+
+    function renderSubjects() {
+      if(!currentCourseId || !currentSem) {
+        window.location.href = 'home.html';
+        return;
+      }
+      
+      const course = getCourseObj(currentCourseId);
+      if(!course) return;
+
+      document.getElementById('bc-course-name').innerText = course.name;
+      document.getElementById('bc-sem-name').innerText = `Sem ${currentSem}`;
+      document.getElementById('sub-page-title').innerText = `Semester ${currentSem}`;
+      
+      const list = document.getElementById('subject-list');
+      let subs = [];
+      if(data.subjects[currentCourseId] && data.subjects[currentCourseId][currentSem]) {
+        subs = data.subjects[currentCourseId][currentSem];
+      }
+      
+      document.getElementById('sub-count-text').innerText = `${subs.length} subjects available`;
+      list.innerHTML = '';
+
+      if(subs.length === 0) {
+        list.innerHTML = '<p>No subjects added for this semester yet.</p>';
+        return;
+      }
+
+      subs.forEach(sub => {
+        let badges = '';
+        if(data.files[sub]) {
+          const f = data.files[sub];
+          if(f.notes && f.notes.length) badges += `<span class="badge badge-notes">Notes</span>`;
+          if(f.books && f.books.length) badges += `<span class="badge badge-books">Books</span>`;
+          if(f.pyqs && f.pyqs.length) badges += `<span class="badge badge-pyqs">PYQs</span>`;
+          if(f.syllabus && f.syllabus.length) badges += `<span class="badge badge-syllabus">Syllabus</span>`;
+        }
+        
+        list.innerHTML += `
+          <a class="card subject-card" onclick="goToContent('${sub}')">
+            <div>
+              <div class="card-title">${sub}</div>
+              <div style="margin-top:8px;">${badges || '<span class="badge" style="background:rgba(255,255,255,0.1);color:var(--text-muted)">No files yet</span>'}</div>
+            </div>
+            <button class="btn btn-ghost" style="padding: 8px 16px;">View Content →</button>
+          </a>
+        `;
+      });
+    }
+
+    function goToContent(subjectName) {
+      localStorage.setItem('currentSubject', subjectName);
+      window.location.href = 'content.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotesBuddy - Content</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e5a0">
+  <link rel="apple-touch-icon" href="logo.png">
+</head>
+<body>
+
+  <div class="container">
+    <nav class="navbar">
+      <a href="home.html" class="nav-brand">
+        <img src="logo.png" alt="Logo"> NotesBuddy
+      </a>
+      <div style="display:flex; gap: 12px;">
+        <button class="btn btn-ghost" onclick="window.location.href='teacher-login.html'">Teacher</button>
+        <button class="btn btn-primary" onclick="window.location.href='contact.html'" style="padding: 10px 16px;">Contact Me</button>
+      </div>
+    </nav>
+
+    <button class="btn btn-ghost" onclick="window.history.back()" style="margin-bottom: 24px;">← Back</button>
+    
+    <div class="breadcrumb">
+      <a href="home.html">Home</a> › <a href="semesters.html" id="bc-course-name">Course</a> › <a href="subjects.html" id="bc-sem-name">Sem N</a> › <span id="bc-subject-name">Subject</span>
+    </div>
+    
+    <h1 id="content-page-title" style="margin-bottom: 8px;">Subject Name</h1>
+    <p id="content-subtitle">Course • Semester N</p>
+
+
+
+    <div id="content-sections"></div>
+
+
+  </div>
+  <div class="footer-text">Programmed by Shivam</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    window.onload = () => {
+      renderContent();
+    };
+
+    function renderContent() {
+      if(!currentCourseId || !currentSem || !currentSubject) {
+        window.location.href = 'home.html';
+        return;
+      }
+      
+      const course = getCourseObj(currentCourseId);
+      if(!course) return;
+
+      document.getElementById('bc-course-name').innerText = course.name;
+      document.getElementById('bc-sem-name').innerText = `Sem ${currentSem}`;
+      document.getElementById('bc-subject-name').innerText = currentSubject;
+      document.getElementById('content-page-title').innerText = currentSubject;
+      document.getElementById('content-subtitle').innerText = `${course.full} • Semester ${currentSem}`;
+      
+      const container = document.getElementById('content-sections');
+      container.innerHTML = '';
+      const files = data.files[currentSubject];
+      if(!files) {
+        container.innerHTML = '<div class="card"><p style="text-align:center">Content is being uploaded for this subject. Check back later!</p></div>';
+        return;
+      }
+
+      const sections = [
+        { key: 'notes', title: 'NOTES', color: 'var(--accent-mint)' },
+        { key: 'books', title: 'BOOKS', color: '#cfbcff' },
+        { key: 'pyqs', title: 'PREVIOUS YEAR QUESTIONS', color: '#e7c365' },
+        { key: 'syllabus', title: 'SYLLABUS', color: '#ffb4ab' }
+      ];
+
+      sections.forEach(sec => {
+        if(files[sec.key] && files[sec.key].length > 0) {
+          let html = `
+            <div class="content-section">
+              <h2 class="content-section-title" style="color: ${sec.color}">${sec.title}</h2>
+          `;
+          files[sec.key].forEach(f => {
+            html += `
+              <div class="file-card">
+                <div class="file-info">
+                  <div class="file-name">${f.name}</div>
+                  <div class="file-meta">${f.size} • <span style="color:var(--accent-mint)">By: ${f.credit || 'Admin'}</span></div>
+                </div>
+                <div class="file-actions">
+                  <button class="btn btn-ghost" style="padding:8px 16px;font-size:14px;" onclick="trackDownload(); window.open('${f.url}', '_blank')">View</button>
+                  <a href="${f.url}" download onclick="trackDownload()" class="btn btn-primary" style="padding:8px 16px;font-size:14px;text-decoration:none;display:inline-block;">Download</a>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+          container.innerHTML += html;
+        }
+      });
+    }
+
+    function trackDownload() {
+      if(window.db) {
+        db.collection("appData").doc("stats").update({
+          downloads: firebase.firestore.FieldValue.increment(1)
+        });
+      }
+    }
+
+    function selectAmount(btn) {
+      document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

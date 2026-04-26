@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotesBuddy - Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e5a0">
+  <link rel="apple-touch-icon" href="logo.png">
+</head>
+<body>
+
+  <div class="container">
+    <nav class="navbar">
+      <a href="home.html" class="nav-brand">
+        <img src="logo.png" alt="Logo">
+        NotesBuddy
+      </a>
+      <div style="display:flex; gap: 12px;">
+        <button class="btn btn-ghost" onclick="window.location.href='teacher-login.html'">Teacher</button>
+        <button class="btn btn-primary" onclick="window.location.href='contact.html'" style="padding: 10px 16px;">Contact Me</button>
+      </div>
+    </nav>
+
+    <div class="hero-section">
+      <h1 class="hero-title">Master Your Syllabus</h1>
+      <p>Access notes, books, and previous year questions instantly.</p>
+      <div class="search-container" style="margin-top: 32px;">
+        <input type="text" id="home-search" class="input-field" placeholder="Search for subjects... (e.g. Database)" oninput="handleSearch()">
+        <div id="search-results" class="search-results"></div>
+      </div>
+    </div>
+
+    <div id="course-grid" class="grid-courses"></div>
+
+
+  </div>
+  <div class="footer-text">Programmed by Shivam</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function renderCourses() {
+      const grid = document.getElementById('course-grid');
+      grid.innerHTML = '';
+      data.courses.forEach(c => {
+        grid.innerHTML += `
+          <a class="card" onclick="goToSemesters('${c.id}')">
+            <h2 class="card-title">${c.name}</h2>
+            <p>${c.full}</p>
+            <div class="course-stats">
+              <span>📚 ${c.subjects} Subjects</span>
+              <span>🎓 ${c.sems} Semesters</span>
+            </div>
+          </a>
+        `;
+      });
+    }
+
+    function goToSemesters(courseId) {
+      localStorage.setItem('currentCourseId', courseId);
+      window.location.href = 'semesters.html';
+    }
+
+    function handleSearch() {
+      const query = document.getElementById('home-search').value.toLowerCase();
+      const resultsDiv = document.getElementById('search-results');
+      
+      if(query.length < 2) {
+        resultsDiv.style.display = 'none';
+        document.getElementById('course-grid').style.display = 'grid';
+        return;
+      }
+
+      let results = [];
+      Object.keys(data.subjects).forEach(courseId => {
+        const cObj = data.courses.find(c => c.id === courseId);
+        Object.keys(data.subjects[courseId]).forEach(sem => {
+          data.subjects[courseId][sem].forEach(sub => {
+            if(sub.toLowerCase().includes(query)) {
+              results.push({ courseId, courseName: cObj.name, sem, sub });
+            }
+          });
+        });
+      });
+
+      if(results.length > 0) {
+        resultsDiv.innerHTML = results.map(r => `
+          <div class="search-result-item" onclick="goToSubject('${r.courseId}', ${r.sem}, '${r.sub}')">
+            <div><strong style="color:var(--text-main)">${r.sub}</strong></div>
+            <div style="font-size:12px; color:var(--text-muted)">${r.courseName} • Sem ${r.sem}</div>
+          </div>
+        `).join('');
+        resultsDiv.style.display = 'block';
+      } else {
+        resultsDiv.innerHTML = '<div style="padding:16px;text-align:center;">No subjects found</div>';
+        resultsDiv.style.display = 'block';
+      }
+    }
+
+    function goToSubject(courseId, sem, subject) {
+      localStorage.setItem('currentCourseId', courseId);
+      localStorage.setItem('currentSem', sem);
+      localStorage.setItem('currentSubject', subject);
+      window.location.href = 'content.html';
+    }
+
+    window.onload = () => {
+      renderCourses();
+    };
+  </script>
+</body>
+</html>

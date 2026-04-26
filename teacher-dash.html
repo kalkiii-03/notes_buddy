@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotesBuddy - Teacher Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00e5a0">
+  <link rel="apple-touch-icon" href="logo.png">
+</head>
+<body>
+
+  <div class="container">
+    <nav class="navbar">
+      <a href="home.html" class="nav-brand">
+        <img src="logo.png" alt="Logo"> NotesBuddy
+      </a>
+      <div style="display:flex; gap: 12px;">
+      </div>
+    </nav>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+      <h1 id="teacher-welcome">Welcome, Teacher</h1>
+      <button class="btn btn-ghost" onclick="logoutTeacher()">Logout</button>
+    </div>
+    
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" onclick="switchTeacherTab('upload')">Upload File</button>
+      <button class="tab-btn" onclick="switchTeacherTab('manage')">Manage Content</button>
+    </div>
+
+    <!-- TAB 1: UPLOAD -->
+    <div id="teacher-tab-upload" class="tab-panel active">
+      <div class="card" style="margin-bottom: 32px;">
+        <h2 style="margin-bottom: 24px;">Upload New Material</h2>
+        <div class="form-grid">
+          <select id="tu-course" class="input-field" onchange="updateTeacherSubjects()"><option value="">Select Course...</option></select>
+          <select id="tu-sem" class="input-field" onchange="updateTeacherSubjects()">
+            <option value="">Select Semester...</option>
+            <option value="1">Semester 1</option><option value="2">Semester 2</option><option value="3">Semester 3</option>
+            <option value="4">Semester 4</option><option value="5">Semester 5</option><option value="6">Semester 6</option>
+          </select>
+          <select id="tu-subject" class="input-field"><option value="">Select Subject...</option></select>
+          <select id="tu-type" class="input-field">
+            <option value="">Select File Type...</option>
+            <option value="notes">Notes</option><option value="books">Book</option>
+            <option value="pyqs">Previous Year Questions</option><option value="syllabus">Syllabus</option>
+          </select>
+        </div>
+        <input type="text" id="tu-title" class="input-field" placeholder="File Title (e.g. Chapter 1 Summary)">
+        <input type="text" id="tu-credit" class="input-field" placeholder="Credit (Default: Your Name)">
+        <input type="url" id="tu-file" class="input-field" placeholder="Google Drive Link (Make sure it's public)">
+        <div id="tu-error" class="error-msg"></div>
+        <button class="btn btn-primary" onclick="teacherUpload()">Upload File</button>
+      </div>
+
+      <h3 style="margin-bottom: 16px;">My Uploads</h3>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead><tr><th>File Title</th><th>Course</th><th>Sem</th><th>Subject</th><th>Type</th><th>Action</th></tr></thead>
+          <tbody id="teacher-uploads-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: MANAGE -->
+    <div id="teacher-tab-manage" class="tab-panel">
+      <div class="form-grid">
+        <div class="card">
+          <h3 style="margin-bottom: 16px;">Add Course</h3>
+          <div id="tc-error" class="error-msg"></div>
+          <input type="text" id="tc-id" class="input-field" placeholder="Short Name (e.g. BCA)">
+          <input type="text" id="tc-full" class="input-field" placeholder="Full Name">
+          <input type="number" id="tc-sems" class="input-field" value="6" min="1" max="10" placeholder="Semesters">
+          <button class="btn btn-primary" onclick="teacherAddCourse()">Add Course</button>
+          <h4 style="margin-top: 24px; margin-bottom: 12px;">Recently Added</h4>
+          <ul id="tc-added-list" style="list-style: none; color: var(--text-muted); font-size: 14px;"></ul>
+        </div>
+        
+        <div class="card">
+          <h3 style="margin-bottom: 16px;">Add Subject</h3>
+          <div id="ts-error" class="error-msg"></div>
+          <select id="ts-course" class="input-field"><option value="">Select Course...</option></select>
+          <select id="ts-sem" class="input-field">
+            <option value="">Select Semester...</option>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          </select>
+          <input type="text" id="ts-name" class="input-field" placeholder="Subject Name">
+          <button class="btn btn-primary" onclick="teacherAddSubject()">Add Subject</button>
+          <h4 style="margin-top: 24px; margin-bottom: 12px;">Recently Added</h4>
+          <ul id="ts-added-list" style="list-style: none; color: var(--text-muted); font-size: 14px;"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-text">Programmed by Shivam</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let teacherUploads = [];
+
+    window.onload = () => {
+      if(!currentTeacherUser) {
+        window.location.href = 'teacher-login.html';
+        return;
+      }
+      
+      document.getElementById('teacher-welcome').innerText = `Welcome, ${currentTeacherUser}`;
+      populateDropdowns();
+    };
+
+    function populateDropdowns() {
+      const courseSel = document.getElementById('tu-course');
+      const tsCourseSel = document.getElementById('ts-course');
+      courseSel.innerHTML = '<option value="">Select Course...</option>';
+      tsCourseSel.innerHTML = '<option value="">Select Course...</option>';
+      data.courses.forEach(c => {
+        courseSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        tsCourseSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+      });
+    }
+
+    function logoutTeacher() {
+      localStorage.removeItem('currentTeacher');
+      window.location.href = 'home.html';
+    }
+
+    function switchTeacherTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('teacher-tab-' + tab).classList.add('active');
+    }
+
+    function updateTeacherSubjects() {
+      const course = document.getElementById('tu-course').value;
+      const sem = document.getElementById('tu-sem').value;
+      const subSel = document.getElementById('tu-subject');
+      
+      subSel.innerHTML = '<option value="">Select Subject...</option>';
+      if(course && sem && data.subjects[course] && data.subjects[course][sem]) {
+        data.subjects[course][sem].forEach(s => {
+          subSel.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+      }
+    }
+
+    function teacherUpload() {
+      const c = document.getElementById('tu-course').value;
+      const sem = document.getElementById('tu-sem').value;
+      const sub = document.getElementById('tu-subject').value;
+      const type = document.getElementById('tu-type').value;
+      const title = document.getElementById('tu-title').value;
+      const fileUrl = document.getElementById('tu-file').value;
+      let credit = document.getElementById('tu-credit').value;
+      const err = document.getElementById('tu-error');
+
+      if(!c || !sem || !sub || !type || !title || !fileUrl) {
+        err.innerText = "All fields are required.";
+        err.style.display = 'block';
+        return;
+      }
+      
+      if(!credit) credit = currentTeacherUser;
+      err.style.display = 'none';
+      
+      db.collection("files").add({
+        course: c, sem: sem, subject: sub, type: type, name: title, size: "Link", url: fileUrl, credit: credit, timestamp: firebase.firestore.FieldValue.serverTimestamp(), uploader: currentTeacherUser
+      }).then(() => {
+        showToast("File uploaded successfully!");
+        document.getElementById('tu-title').value = '';
+        document.getElementById('tu-file').value = '';
+      });
+    }
+
+    function renderTeacherUploads() {
+      const list = document.getElementById('teacher-uploads-list');
+      list.innerHTML = '';
+      if(!data.files) return;
+      Object.keys(data.files).forEach(sub => {
+        Object.keys(data.files[sub]).forEach(type => {
+          data.files[sub][type].forEach((f) => {
+            if(f.uploader === currentTeacherUser || f.credit === currentTeacherUser) {
+              list.innerHTML += `
+                <tr>
+                  <td>${f.name}</td><td>${f.course}</td><td>${f.sem}</td><td>${sub}</td><td>${type}</td>
+                  <td><button class="btn btn-ghost" style="padding:4px 8px;font-size:12px;color:#ffb4ab;" onclick="deleteTeacherUpload('${f.id}')">Delete</button></td>
+                </tr>
+              `;
+            }
+          });
+        });
+      });
+    }
+
+    function deleteTeacherUpload(fileId) {
+      db.collection("files").doc(fileId).delete().then(() => showToast("File deleted."));
+    }
+
+    function teacherAddCourse() {
+      const id = document.getElementById('tc-id').value.toLowerCase();
+      const full = document.getElementById('tc-full').value;
+      const sems = document.getElementById('tc-sems').value;
+      const err = document.getElementById('tc-error');
+      
+      if(!id || !full || !sems) { err.innerText = "All fields required"; err.style.display='block'; return; }
+      
+      data.courses.push({ id, name: id.toUpperCase(), full, sems: parseInt(sems), subjects: 0 });
+      db.collection("appData").doc("metadata").update({ courses: data.courses }).then(() => {
+        document.getElementById('tc-id').value = '';
+        document.getElementById('tc-full').value = '';
+        err.style.display='none';
+        showToast("Course Added Successfully!");
+      });
+    }
+
+    function teacherAddSubject() {
+      const c = document.getElementById('ts-course').value;
+      const sem = document.getElementById('ts-sem').value;
+      const name = document.getElementById('ts-name').value;
+      const err = document.getElementById('ts-error');
+      
+      if(!c || !sem || !name) { err.innerText="All fields required"; err.style.display='block'; return; }
+      
+      if(!data.subjects[c]) data.subjects[c] = {};
+      if(!data.subjects[c][sem]) data.subjects[c][sem] = [];
+      data.subjects[c][sem].push(name);
+      
+      db.collection("appData").doc("metadata").update({ subjects: data.subjects }).then(() => {
+        document.getElementById('ts-name').value = '';
+        err.style.display='none';
+        showToast("Subject Added Successfully!");
+      });
+    }
+  </script>
+</body>
+</html>

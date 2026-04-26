@@ -1,0 +1,22 @@
+{
+  "name": "NotesBuddy",
+  "short_name": "NotesBuddy",
+  "description": "Your college notes, books, and syllabus all in one place.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#141218",
+  "theme_color": "#00e5a0",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

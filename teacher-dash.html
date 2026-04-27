@@ -147,6 +147,7 @@
       const subSel = document.getElementById('tu-subject');
       
       subSel.innerHTML = '<option value="">Select Subject...</option>';
+      subSel.innerHTML += '<option value="GENERAL">General (Semester Syllabus)</option>';
       if(course && sem && data.subjects[course] && data.subjects[course][sem]) {
         data.subjects[course][sem].forEach(s => {
           subSel.innerHTML += `<option value="${s}">${s}</option>`;

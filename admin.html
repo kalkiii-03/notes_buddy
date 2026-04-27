@@ -456,6 +456,7 @@
       const sem = document.getElementById('au-sem').value;
       const sel = document.getElementById('au-subject');
       sel.innerHTML = '<option value="">Select Subject...</option>';
+      sel.innerHTML += '<option value="GENERAL">General (Semester Syllabus)</option>';
       if(c && sem && data.subjects[c] && data.subjects[c][sem]) {
         data.subjects[c][sem].forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
       }

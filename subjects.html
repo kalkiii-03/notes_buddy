@@ -34,8 +34,13 @@
       <a href="home.html">Home</a> › <a href="semesters.html" id="bc-course-name">Course</a> › <span id="bc-sem-name">Sem N</span>
     </div>
     
-    <h1 id="sub-page-title" style="margin-bottom: 8px;">Semester N</h1>
-    <p id="sub-count-text">0 subjects available</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom: 24px;">
+      <div>
+        <h1 id="sub-page-title" style="margin-bottom: 8px;">Semester N</h1>
+        <p id="sub-count-text">0 subjects available</p>
+      </div>
+      <button id="view-syllabus-btn" class="btn btn-primary" style="display:none; padding: 12px 20px; font-weight: 600;" onclick="viewSemesterSyllabus()">📜 View Syllabus</button>
+    </div>
 
     <div id="subject-list" class="list-subjects"></div>
   </div>
@@ -47,6 +52,12 @@
     window.onload = () => {
       renderSubjects();
     };
+
+    function viewSemesterSyllabus() {
+      const syllabusBtn = document.getElementById('view-syllabus-btn');
+      const url = syllabusBtn.getAttribute('data-url');
+      if(url) window.open(url, '_blank');
+    }
 
     function renderSubjects() {
       if(!currentCourseId || !currentSem) {
@@ -69,6 +80,28 @@
       
       document.getElementById('sub-count-text').innerText = `${subs.length} subjects available`;
       list.innerHTML = '';
+
+      // Syllabus Check
+      let semesterSyllabus = null;
+      // First check for GENERAL syllabus
+      if(data.files['GENERAL'] && data.files['GENERAL'].syllabus && data.files['GENERAL'].syllabus.length > 0) {
+        semesterSyllabus = data.files['GENERAL'].syllabus[0];
+      } else {
+        // Fallback: find any syllabus in this semester
+        Object.keys(data.files).forEach(subKey => {
+          if(data.files[subKey].syllabus && data.files[subKey].syllabus.length > 0) {
+            semesterSyllabus = data.files[subKey].syllabus[0];
+          }
+        });
+      }
+
+      if(semesterSyllabus) {
+        const btn = document.getElementById('view-syllabus-btn');
+        btn.style.display = 'block';
+        btn.setAttribute('data-url', semesterSyllabus.url);
+      } else {
+        document.getElementById('view-syllabus-btn').style.display = 'none';
+      }
 
       if(subs.length === 0) {
         list.innerHTML = '<p>No subjects added for this semester yet.</p>';
